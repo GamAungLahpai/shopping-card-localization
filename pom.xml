@@ -94,7 +94,6 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <!-- IMPORTANT: your entry point -->
                             <mainClass>Main</mainClass>
                         </manifest>
                     </archive>
@@ -102,13 +101,12 @@
                 </configuration>
             </plugin>
 
-            <!-- JavaFX Run -->
+            <!-- JavaFX -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <!-- This launches JavaFX correctly -->
                     <mainClass>view.Launcher</mainClass>
                 </configuration>
             </plugin>
