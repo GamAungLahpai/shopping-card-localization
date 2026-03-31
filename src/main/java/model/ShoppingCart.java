@@ -1,3 +1,5 @@
+package model;
+
 public class ShoppingCart {
 
     public static double calculateItemCost(double price, int quantity) {

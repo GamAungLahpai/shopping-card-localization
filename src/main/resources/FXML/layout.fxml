@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:id="root"
+      fx:controller="controller.MainController"
+      spacing="10"
+      style="-fx-padding: 16;">
+
+    <!-- Language selector -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label fx:id="languageLabel"/>
+        <ComboBox fx:id="languageBox" prefWidth="160"/>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Number of items input -->
+    <TextField fx:id="numItemsField" style="-fx-padding: 7;"/>
+
+    <Button fx:id="createItemsButton"
+            onAction="#handleCreateItems"
+            maxWidth="Infinity"
+            style="-fx-padding: 10;"/>
+
+    <!-- Dynamic items list -->
+    <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">
+        <VBox fx:id="itemsBox" spacing="8" style="-fx-padding: 4;"/>
+    </ScrollPane>
+
+    <!-- Calculate button -->
+    <Button fx:id="calculateButton"
+            onAction="#handleCalculate"
+            maxWidth="Infinity"
+            style="-fx-padding: 10; -fx-font-weight: bold;"/>
+
+    <!-- Total result -->
+    <Label fx:id="resultLabel"
+           style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+
+</VBox>
