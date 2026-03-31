@@ -7,9 +7,9 @@
       fx:id="root"
       fx:controller="controller.MainController"
       spacing="10"
-      style="-fx-padding: 16;">
+      stylesheets="@../CSS/main.css"
+      styleClass="app-root">
 
-    <!-- Language selector -->
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label fx:id="languageLabel"/>
         <ComboBox fx:id="languageBox" prefWidth="160"/>
@@ -17,27 +17,21 @@
 
     <Separator/>
 
-    <!-- Number of items input -->
-    <TextField fx:id="numItemsField" style="-fx-padding: 7;"/>
+    <TextField fx:id="numItemsField" styleClass="app-input"/>
 
     <Button fx:id="createItemsButton"
             onAction="#handleCreateItems"
-            maxWidth="Infinity"
-            style="-fx-padding: 10;"/>
+            maxWidth="Infinity"/>
 
-    <!-- Dynamic items list -->
     <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS">
-        <VBox fx:id="itemsBox" spacing="8" style="-fx-padding: 4;"/>
+        <VBox fx:id="itemsBox" spacing="8" styleClass="items-box"/>
     </ScrollPane>
 
-    <!-- Calculate button -->
     <Button fx:id="calculateButton"
             onAction="#handleCalculate"
             maxWidth="Infinity"
-            style="-fx-padding: 10; -fx-font-weight: bold;"/>
+            styleClass="primary-button"/>
 
-    <!-- Total result -->
-    <Label fx:id="resultLabel"
-           style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+    <Label fx:id="resultLabel" styleClass="result-label"/>
 
 </VBox>

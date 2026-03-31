@@ -3,7 +3,7 @@
 ## Run Locally
 ```bash
 mvn clean package
-java -jar target/shopping-cart.jar
+mvn javafx:run
 ```
 
 ## Run Tests
