@@ -44,7 +44,7 @@ pipeline {
             steps {
                 sh '''
                 docker exec -i mariadb-test \
-                mysql -uroot -pgroup7 shopping_cart_localization < schema.sql
+                mariadb -uroot -pgroup7 shopping_cart_localization < schema.sql
                 '''
             }
         }
