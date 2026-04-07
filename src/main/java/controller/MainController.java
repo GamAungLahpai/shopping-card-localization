@@ -3,11 +3,21 @@ package controller;
 import javafx.fxml.FXML;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import model.ShoppingCart;
+import utli.CartService;
+import utli.LocalizationService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MainController {
 
@@ -20,48 +30,59 @@ public class MainController {
     @FXML private VBox itemsBox;
     @FXML private Label resultLabel;
 
-    private ResourceBundle bundle;
-    private final Map<String, Locale> localeMap = new LinkedHashMap<>();
+    private final LocalizationService localizationService = new LocalizationService();
+    private final CartService cartService = new CartService();
+
+    private final Map<String, String> languageCodeMap = new LinkedHashMap<>();
+    private Map<String, String> strings = new LinkedHashMap<>();
+    private String currentLanguageCode = "en_US";
 
     @FXML
     public void initialize() {
-        localeMap.put("English", new Locale("en", "US"));
-        localeMap.put("Finnish", new Locale("fi", "FI"));
-        localeMap.put("Swedish", new Locale("sv", "SE"));
-        localeMap.put("Japanese", new Locale("ja", "JP"));
-        localeMap.put("Arabic", new Locale("ar", "AR"));
+        languageCodeMap.put("English", "en_US");
+        languageCodeMap.put("Finnish", "fi_FI");
+        languageCodeMap.put("Swedish", "sv_SE");
+        languageCodeMap.put("Japanese", "ja_JP");
+        languageCodeMap.put("Arabic", "ar_AR");
 
-        languageBox.getItems().addAll(localeMap.keySet());
+        languageBox.getItems().addAll(languageCodeMap.keySet());
         languageBox.setValue("English");
 
-        loadBundle(localeMap.get("English"));
+        loadStrings(languageCodeMap.get("English"));
         applyTexts();
 
         languageBox.setOnAction(e -> changeLanguage());
     }
 
     private void changeLanguage() {
-        Locale locale = localeMap.get(languageBox.getValue());
-        loadBundle(locale);
+        String selectedLanguage = languageBox.getValue();
+        String languageCode = languageCodeMap.getOrDefault(selectedLanguage, "en_US");
+
+        loadStrings(languageCode);
         applyTexts();
 
-        if (languageBox.getValue().equals("Arabic")) {
+        if ("ar_AR".equals(languageCode)) {
             root.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
         } else {
             root.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
         }
     }
 
-    private void loadBundle(Locale locale) {
-        bundle = ResourceBundle.getBundle("MessagesBundle", locale);
+    private void loadStrings(String languageCode) {
+        currentLanguageCode = languageCode;
+        strings = localizationService.getStrings(languageCode);
+    }
+
+    private String t(String key) {
+        return strings.getOrDefault(key, key);
     }
 
     private void applyTexts() {
-        languageLabel.setText(bundle.getString("select.language"));
-        numItemsField.setPromptText(bundle.getString("number.of.items"));
-        createItemsButton.setText(bundle.getString("create.items"));
-        calculateButton.setText(bundle.getString("calculate"));
-        resultLabel.setText(bundle.getString("total.cost") + " -");
+        languageLabel.setText(t("select.language"));
+        numItemsField.setPromptText(t("number.of.items"));
+        createItemsButton.setText(t("create.items"));
+        calculateButton.setText(t("calculate"));
+        resultLabel.setText(t("total.cost") + " -");
 
         updateItemTexts();
     }
@@ -71,26 +92,26 @@ public class MainController {
             VBox card = (VBox) itemsBox.getChildren().get(i);
 
             ((Label) card.getChildren().get(0))
-                    .setText(bundle.getString("item.label") + " " + (i + 1));
+                    .setText(t("item.label") + " " + (i + 1));
 
             ((TextField) card.getChildren().get(1))
-                    .setPromptText(bundle.getString("enter.price"));
+                    .setPromptText(t("enter.price"));
 
             ((TextField) card.getChildren().get(2))
-                    .setPromptText(bundle.getString("enter.quantity"));
+                    .setPromptText(t("enter.quantity"));
         }
     }
 
     private VBox createItemCard(int index) {
         VBox card = new VBox(5);
 
-        Label label = new Label(bundle.getString("item.label") + " " + index);
+        Label label = new Label(t("item.label") + " " + index);
 
         TextField price = new TextField();
-        price.setPromptText(bundle.getString("enter.price"));
+        price.setPromptText(t("enter.price"));
 
         TextField qty = new TextField();
-        qty.setPromptText(bundle.getString("enter.quantity"));
+        qty.setPromptText(t("enter.quantity"));
 
         Label total = new Label();
 
@@ -103,39 +124,60 @@ public class MainController {
         itemsBox.getChildren().clear();
         resultLabel.setText("");
 
-        int n = Integer.parseInt(numItemsField.getText());
+        try {
+            int n = Integer.parseInt(numItemsField.getText().trim());
+            if (n <= 0) {
+                throw new NumberFormatException();
+            }
 
-        for (int i = 1; i <= n; i++) {
-            itemsBox.getChildren().add(createItemCard(i));
+            for (int i = 1; i <= n; i++) {
+                itemsBox.getChildren().add(createItemCard(i));
+            }
+        } catch (NumberFormatException e) {
+            showAlert(t("error.invalid.number"));
         }
     }
 
     @FXML
     private void handleCalculate() {
         List<Double> costs = new ArrayList<>();
+        List<double[]> itemsForDb = new ArrayList<>();
 
-        for (Node node : itemsBox.getChildren()) {
-            VBox card = (VBox) node;
+        try {
+            for (Node node : itemsBox.getChildren()) {
+                VBox card = (VBox) node;
 
-            double price = Double.parseDouble(
-                    ((TextField) card.getChildren().get(1)).getText()
+                double price = Double.parseDouble(
+                        ((TextField) card.getChildren().get(1)).getText().trim()
+                );
+
+                int qty = Integer.parseInt(
+                        ((TextField) card.getChildren().get(2)).getText().trim()
+                );
+
+                double itemTotal = ShoppingCart.calculateItemCost(price, qty);
+                costs.add(itemTotal);
+                itemsForDb.add(new double[]{price, qty});
+
+                ((Label) card.getChildren().get(3))
+                        .setText(t("item.total") + " " + String.format("%.2f", itemTotal));
+            }
+
+            double total = ShoppingCart.calculateTotalCost(
+                    costs.stream().mapToDouble(Double::doubleValue).toArray()
             );
 
-            int qty = Integer.parseInt(
-                    ((TextField) card.getChildren().get(2)).getText()
-            );
-
-            double itemTotal = ShoppingCart.calculateItemCost(price, qty);
-            costs.add(itemTotal);
-
-            ((Label) card.getChildren().get(3))
-                    .setText(bundle.getString("item.total") + " " + itemTotal);
+            resultLabel.setText(t("total.cost") + " " + String.format("%.2f", total));
+            cartService.saveCart(itemsForDb.size(), total, currentLanguageCode, itemsForDb);
+        } catch (NumberFormatException e) {
+            showAlert(t("error.invalid.number"));
+        } catch (IllegalArgumentException e) {
+            showAlert(e.getMessage());
         }
+    }
 
-        double total = ShoppingCart.calculateTotalCost(
-                costs.stream().mapToDouble(Double::doubleValue).toArray()
-        );
-
-        resultLabel.setText(bundle.getString("total.cost") + " " + total);
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
+        alert.showAndWait();
     }
 }

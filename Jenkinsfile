@@ -8,9 +8,15 @@ pipeline {
 
     environment {
         PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Docker.app/Contents/Resources/bin"
+
         DOCKERHUB_CREDENTIALS_ID = 'DockerHub_ID'
         DOCKERHUB_REPO = '218468/shopping-cart'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+
+        // 🔥 DB ENV (MATCH YOUR JAVA CODE)
+        DB_URL = "jdbc:mariadb://localhost:3307/shopping_cart_localization"
+        DB_USER = "root"
+        DB_PASSWORD = "group7"
     }
 
     stages {
@@ -18,6 +24,30 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/GamAungLahpai/shopping-card-localization'
+            }
+        }
+
+        stage('Start Database') {
+            steps {
+                sh '''
+                docker run -d \
+                  --name mariadb-test \
+                  -e MYSQL_ROOT_PASSWORD=group7 \
+                  -e MYSQL_DATABASE=shopping_cart_localization \
+                  -p 3307:3306 \
+                  mariadb:11
+
+                sleep 15
+                '''
+            }
+        }
+
+        stage('Seed Database') {
+            steps {
+                sh '''
+                docker exec -i mariadb-test \
+                mysql -uroot -pgroup7 shopping_cart_localization < schema.sql
+                '''
             }
         }
 
@@ -74,7 +104,11 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(
+                        credentialsId: DOCKERHUB_CREDENTIALS_ID,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG
@@ -85,6 +119,12 @@ pipeline {
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker rm -f mariadb-test || true'
         }
     }
 }

@@ -6,4 +6,4 @@ RUN mvn clean package -DskipTests -Djavafx.platform=linux
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/shopping-cart.jar app.jar
-CMD ["java", "-jar", "app.jar"]
+CMD ["sh", "-c", "sleep 10 && java -jar app.jar"]
