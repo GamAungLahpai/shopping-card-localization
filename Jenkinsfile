@@ -12,9 +12,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS_ID = 'DockerHub_ID'
         DOCKERHUB_REPO = '218468/shopping-cart'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-
-        // 🔥 DB ENV (MATCH YOUR JAVA CODE)
-        DB_URL = "jdbc:mariadb://localhost:3307/shopping_cart_localization"
+        DB_URL = "jdbc:mariadb://localhost:3308/shopping_cart_localization"
         DB_USER = "root"
         DB_PASSWORD = "group7"
     }
@@ -34,7 +32,7 @@ pipeline {
                   --name mariadb-test \
                   -e MYSQL_ROOT_PASSWORD=group7 \
                   -e MYSQL_DATABASE=shopping_cart_localization \
-                  -p 3307:3306 \
+                  -p 3308:3306 \
                   mariadb:11
 
                 sleep 15
