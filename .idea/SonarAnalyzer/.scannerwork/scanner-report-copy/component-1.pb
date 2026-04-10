@@ -1,0 +1,1 @@
+ :	R(SonarAnalyzer:Shopping_Card_Localization

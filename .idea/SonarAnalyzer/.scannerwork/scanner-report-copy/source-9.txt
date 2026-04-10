@@ -1,0 +1,40 @@
+.app-root {
+    -fx-padding: 16;
+    -fx-font-family: "Arial"; /* ensure Arabic glyphs render */
+}
+
+.app-input {
+    -fx-padding: 7;
+}
+
+.items-box {
+    -fx-padding: 4;
+}
+
+.primary-button {
+    -fx-padding: 10;
+    -fx-font-weight: bold;
+}
+
+.item-card {
+    -fx-padding: 8;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1;
+}
+
+.item-card-header {
+    -fx-font-weight: bold;
+}
+
+.item-input {
+    -fx-padding: 7;
+}
+
+.item-total-label {
+    -fx-font-weight: bold;
+}
+
+.result-label {
+    -fx-font-size: 14;
+    -fx-font-weight: bold;
+}
