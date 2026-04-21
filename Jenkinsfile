@@ -7,14 +7,22 @@ pipeline {
     }
 
     environment {
-        PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Docker.app/Contents/Resources/bin"
+        PATH = "/usr/local/bin:${env.PATH}"
 
         DOCKERHUB_CREDENTIALS_ID = 'DockerHub_ID'
         DOCKERHUB_REPO = '218468/shopping-cart'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DB_URL = "jdbc:mariadb://localhost:3308/shopping_cart_localization"
+        DB_URL = "jdbc:mariadb://localhost:3306/shopping_cart_localization"
         DB_USER = "root"
         DB_PASSWORD = "group7"
+    }
+
+    stage('Debug Environment') {
+        steps {
+            sh 'echo $PATH'
+            sh 'which docker'
+            sh 'docker --version'
+        }
     }
 
     stages {
