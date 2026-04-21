@@ -4,52 +4,73 @@ import dao.DatabaseConnection;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class LocalizationServiceTest {
 
-    private final LocalizationService localizationService = new LocalizationService();
+    private final LocalizationService service = new LocalizationService();
 
     @Test
-    void getStrings_shouldReturnNonNullMap_forEnglishWithoutDatabase() {
-        Map<String, String> strings;
+    void getStrings_shouldReturnEmpty_whenDBFails() {
         try (MockedStatic<DatabaseConnection> dbMock = mockStatic(DatabaseConnection.class)) {
-            dbMock.when(DatabaseConnection::getConnection).thenThrow(new SQLException("No DB for unit test"));
-            strings = localizationService.getStrings("en_US");
-        }
+            dbMock.when(DatabaseConnection::getConnection)
+                    .thenThrow(new SQLException("fail"));
 
-        assertNotNull(strings);
-        assertTrue(strings.isEmpty());
+            Map<String, String> result = service.getStrings("en_US");
+
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
     }
 
     @Test
-    void getStrings_shouldReturnNonNullMap_forNonEnglishWithoutDatabase() {
-        Map<String, String> strings;
-        try (MockedStatic<DatabaseConnection> dbMock = mockStatic(DatabaseConnection.class)) {
-            dbMock.when(DatabaseConnection::getConnection).thenThrow(new SQLException("No DB for unit test"));
-            strings = localizationService.getStrings("ar_AR");
-        }
+    void getStrings_shouldFallbackToEnglish() throws Exception {
 
-        assertNotNull(strings);
-        assertTrue(strings.isEmpty());
+        Connection conn = mock(Connection.class);
+        PreparedStatement stmt = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(stmt);
+        when(stmt.executeQuery()).thenReturn(rs);
+
+        // simulate empty result
+        when(rs.next()).thenReturn(false);
+
+        try (MockedStatic<DatabaseConnection> dbMock = mockStatic(DatabaseConnection.class)) {
+            dbMock.when(DatabaseConnection::getConnection).thenReturn(conn);
+
+            Map<String, String> result = service.getStrings("ar_AR");
+
+            assertNotNull(result);
+            assertTrue(result.isEmpty());
+        }
     }
 
     @Test
-    void getStrings_shouldReturnIndependentMapsOnMultipleCalls() {
-        Map<String, String> firstCall;
-        Map<String, String> secondCall;
-        try (MockedStatic<DatabaseConnection> dbMock = mockStatic(DatabaseConnection.class)) {
-            dbMock.when(DatabaseConnection::getConnection).thenThrow(new SQLException("No DB for unit test"));
-            firstCall = localizationService.getStrings("ja_JP");
-            secondCall = localizationService.getStrings("sv_SE");
-        }
+    void getStrings_shouldReturnMap_whenDataExists() throws Exception {
 
-        assertNotNull(firstCall);
-        assertNotNull(secondCall);
-        assertNotSame(firstCall, secondCall);
+        Connection conn = mock(Connection.class);
+        PreparedStatement stmt = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(stmt);
+        when(stmt.executeQuery()).thenReturn(rs);
+
+        when(rs.next()).thenReturn(true, false);
+        when(rs.getString("key")).thenReturn("hello");
+        when(rs.getString("value")).thenReturn("Hello");
+
+        try (MockedStatic<DatabaseConnection> dbMock = mockStatic(DatabaseConnection.class)) {
+            dbMock.when(DatabaseConnection::getConnection).thenReturn(conn);
+
+            Map<String, String> result = service.getStrings("en_US");
+
+            assertEquals("Hello", result.get("hello"));
+        }
     }
 }

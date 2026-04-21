@@ -17,21 +17,29 @@ public class MainController {
     private static final String EN_US = "en_US";
     private static final String AR_AR = "ar_AR";
 
-    @FXML private VBox root;
-    @FXML private Label languageLabel;
-    @FXML private ComboBox<String> languageBox;
-    @FXML private TextField numItemsField;
-    @FXML private Button createItemsButton;
-    @FXML private Button calculateButton;
-    @FXML private VBox itemsBox;
-    @FXML private Label resultLabel;
+    @FXML public VBox root;
+    @FXML public Label languageLabel;
+    @FXML public ComboBox<String> languageBox;
+    @FXML public TextField numItemsField;
+    @FXML public Button createItemsButton;
+    @FXML public Button calculateButton;
+    @FXML public VBox itemsBox;
+    @FXML public Label resultLabel;
 
-    private final LocalizationService localizationService = new LocalizationService();
-    private final CartService cartService = new CartService();
+    private LocalizationService localizationService = new LocalizationService();
+    private CartService cartService = new CartService();
 
     private final Map<String, String> languageCodeMap = new LinkedHashMap<>();
     private Map<String, String> strings = new LinkedHashMap<>();
     private String currentLanguageCode = EN_US;
+
+    public void setCartService(CartService cartService) {
+        this.cartService = cartService;
+    }
+
+    public void setLocalizationService(LocalizationService localizationService) {
+        this.localizationService = localizationService;
+    }
 
     @FXML
     public void initialize() {
@@ -116,7 +124,7 @@ public class MainController {
     }
 
     @FXML
-    private void handleCreateItems() {
+    public void handleCreateItems() {
         itemsBox.getChildren().clear();
         resultLabel.setText("");
 
@@ -135,7 +143,7 @@ public class MainController {
     }
 
     @FXML
-    private void handleCalculate() {
+    public void handleCalculate() {
         List<Double> costs = new ArrayList<>();
         List<double[]> itemsForDb = new ArrayList<>();
 
@@ -164,6 +172,7 @@ public class MainController {
             );
 
             resultLabel.setText(t("total.cost") + " " + String.format("%.2f", total));
+
             cartService.saveCart(itemsForDb.size(), total, currentLanguageCode, itemsForDb);
 
         } catch (NumberFormatException e) {
@@ -173,8 +182,9 @@ public class MainController {
         }
     }
 
-    private void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
+    protected void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }
