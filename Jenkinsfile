@@ -7,22 +7,15 @@ pipeline {
     }
 
     environment {
-        PATH = "/usr/local/bin:${env.PATH}"
+        PATH = "${env.PATH}:/usr/local/bin"
 
         DOCKERHUB_CREDENTIALS_ID = 'DockerHub_ID'
         DOCKERHUB_REPO = '218468/shopping-cart'
-        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
-        DB_URL = "jdbc:mariadb://localhost:3306/shopping_cart_localization"
+        DOCKER_IMAGE_TAG = "${BUILD_NUMBER}"
+
+        DB_URL = "jdbc:mariadb://localhost:3308/shopping_cart_localization"
         DB_USER = "root"
         DB_PASSWORD = "group7"
-    }
-
-    stage('Debug Environment') {
-        steps {
-            sh 'echo $PATH'
-            sh 'which docker'
-            sh 'docker --version'
-        }
     }
 
     stages {
@@ -36,6 +29,8 @@ pipeline {
         stage('Start Database') {
             steps {
                 sh '''
+                docker rm -f mariadb-test || true
+
                 docker run -d \
                   --name mariadb-test \
                   -e MYSQL_ROOT_PASSWORD=group7 \
@@ -57,28 +52,9 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build & Test') {
             steps {
-                sh 'java -version'
-                sh 'mvn clean compile'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
-        stage('Package') {
-            steps {
-                sh 'mvn package -DskipTests'
-            }
-        }
-
-        stage('Code Coverage') {
-            steps {
-                sh 'mvn jacoco:report'
+                sh 'mvn clean verify'
             }
         }
 
@@ -103,7 +79,6 @@ pipeline {
             steps {
                 sh '''
                     docker build --pull -t $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG .
-                    docker images | head
                 '''
             }
         }
@@ -120,8 +95,7 @@ pipeline {
                         docker push $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG
                         docker tag $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG $DOCKERHUB_REPO:latest
                         docker push $DOCKERHUB_REPO:latest
-                        docker image rm $DOCKERHUB_REPO:$DOCKER_IMAGE_TAG || true
-                        docker image prune -f || true
+                        docker logout || true
                     '''
                 }
             }
