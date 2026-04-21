@@ -1,6 +1,0 @@
-projectKey=SonarAnalyzer:Shopping_Card_Localization
-serverUrl=http://localhost:9000
-serverVersion=26.3.0.120487
-dashboardUrl=http://localhost:9000/dashboard?id=SonarAnalyzer%3AShopping_Card_Localization
-ceTaskId=746f1128-7f24-4318-a102-c79e5efdcadb
-ceTaskUrl=http://localhost:9000/api/ce/task?id=746f1128-7f24-4318-a102-c79e5efdcadb
